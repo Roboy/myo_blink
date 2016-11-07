@@ -1,0 +1,6 @@
+uint8 controlMode
+# 0 for position control mode
+# 1 for velocity control mode
+# 2 for force/effort control mode
+---
+bool is_success

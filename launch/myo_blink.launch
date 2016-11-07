@@ -1,0 +1,3 @@
+<launch>
+  <node name="myo_blink_node" pkg="myo_blink" type="myo_blink"  output="screen"/>
+</launch>
