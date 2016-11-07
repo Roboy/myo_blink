@@ -107,7 +107,7 @@ add_service_files(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES myo_blink
-  CATKIN_DEPENDS flexrayusbinterface roscpp std_msgs std_srvs
+  CATKIN_DEPENDS message_runtime flexrayusbinterface roscpp std_msgs std_srvs
 #  DEPENDS system_lib
 )
 
