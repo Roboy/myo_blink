@@ -137,7 +137,7 @@ add_executable(myo_blink src/myo_blink.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(myo_blink flexrayusbinterface_EXPORTED_TARGETS )
+add_dependencies(myo_blink flexrayusbinterface_EXPORTED_TARGETS myo_blink_gencpp )
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(myo_blink
