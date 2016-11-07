@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(myo_blink)
 
+set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -11,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   message_generation
 )
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -102,7 +105,7 @@ add_service_files(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
+#  INCLUDE_DIRS include
 #  LIBRARIES myo_blink
   CATKIN_DEPENDS flexrayusbinterface roscpp std_msgs std_srvs
 #  DEPENDS system_lib
@@ -130,14 +133,14 @@ include_directories(
 # add_dependencies(myo_blink ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(myo_blink src/myo_blink_node.cpp)
+add_executable(myo_blink src/myo_blink.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(myo_blink_node flexrayusbinterface_EXPORTED_TARGETS )
+add_dependencies(myo_blink flexrayusbinterface_EXPORTED_TARGETS )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(myo_blink_node
+target_link_libraries(myo_blink
  ${catkin_LIBRARIES}
 )
 
