@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
   * Defines the update rate of this ROS node
   * It will be used by loop_rate.sleep();
   */
-  ros::Rate loop_rate(1);
+  ros::Rate loop_rate(100);
 
   /**
      * This is a message object. You stuff it with data, and then publish it.
