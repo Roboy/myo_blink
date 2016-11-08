@@ -77,3 +77,29 @@ Run it
 source devel/setup.bash
 roslaunch myo_blink myo_blink.launch
 ```
+
+Play with it
+------------
+
+Read the spring displacement sensor
+===================================
+```
+rostopic echo /myo_blink/muscles/0/sensors/displacement -c
+```
+
+Change/enable controllers
+=========================
+controlMode:
+- 0 - PositionController
+- 1 - VelocityController
+- 2 - Effort / ForceController
+
+```
+rosservice call /myo_blink/setup "controlMode: 0"
+```
+
+Move the motor
+==============
+```
+rosservice call /myo_blink/move "setpoint: 1.0"
+```
