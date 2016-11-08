@@ -57,6 +57,7 @@ public:
   bool moveMotor(myo_blink::moveMotor::Request &req,
                  myo_blink::moveMotor::Response &res) {
     if (flexray.commandframe0[0].sp[0] = req.setpoint) {
+      flexray.updateCommandFrame();
       res.is_success = true;
     } else {
       res.is_success = false;
@@ -166,7 +167,7 @@ int main(int argc, char **argv) {
   std::stringstream ss;
   ss << "We currently have "
      << myo_control.flexray.checkNumberOfConnectedGanglions()
-     << "ganglia connected.";
+     << " ganglia connected.";
   msg.data = ss.str();
 
   ROS_INFO("%s", msg.data.c_str());
