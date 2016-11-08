@@ -21,21 +21,21 @@ ldconfig -v|grep ftd2xx
 ```
 
  Create a udev file to automatically load the right ftd2xx driver
-=================================================================
+-----------------------------------------------------------------
 ```
 wget https://raw.githubusercontent.com/Roboy/myo_blink/master/30-ftdi.rules
 sudo cp 30-ftdi.rules /etc/udev/rules.d/
 ```
 
 Docker
-------
+======
 When you are doing it in docker use the following command after adjusting the paths to point to the repositories.
 ```
 docker run --rm -ti --privileged -v /dev/bus/usb:/dev/bus/usb -v ~/Development/Roboy/myo_blink/:/cm_workspace/src/myo_blink -v ~/Development/Roboy/flexrayusbinterface/:/cm_workspace/src/flexrayusbinterface -v ~/Development/Roboy/common_utilities/:/cm_workspace/src/common_utilities  ros:kinetic /bin/bash
 ```
 
 No docker or inside docker: Install system dependencies
--------------------------------------------------------
+========================================================
 
 Once you are inside the container or if you are running 16.04 and kinetic directly run through the following commands
 ```
@@ -44,10 +44,9 @@ apt-get install -y libncurses5-dev wget cmake
 ```
 
 Install the ros nodes
----------------------
+=====================
 If you don't already have a catkin workspace, create one:
-=========================================================
-
+---------------------------------------------------------
 ```
 mkdir -p catkin_workspace/src
 cd catkin_workspace/src
@@ -55,7 +54,7 @@ catkin_init_workspace
 ```
 
 Download the repos
-===================
+------------------
 ```
 git clone https://github.com/Roboy/flexrayusbinterface.git
 git clone https://github.com/Roboy/myo_blink.git
@@ -64,31 +63,30 @@ git clone https://github.com/Roboy/common_utilities.git
 ```
 
 Build it
-========
-
+--------
 ```
 cd .. # you should be in catkin_workspace
 catkin_make
 ```
 
+Play with it
+============
+
 Run it
-======
+------
 ```
 source devel/setup.bash
 roslaunch myo_blink myo_blink.launch
 ```
 
-Play with it
-------------
-
 Read the spring displacement sensor
-===================================
+-----------------------------------
 ```
 rostopic echo /myo_blink/muscles/0/sensors/displacement -c
 ```
 
 Change/enable controllers
-=========================
+-------------------------
 controlMode:
 - 0 - PositionController
 - 1 - VelocityController
@@ -99,7 +97,7 @@ rosservice call /myo_blink/setup "controlMode: 0"
 ```
 
 Move the motor
-==============
+--------------
 ```
 rosservice call /myo_blink/move "setpoint: 1.0"
 ```
