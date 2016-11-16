@@ -12,8 +12,8 @@
 
 #include <sstream>
 
-class MyoMotor {
-
+class MyoMotor
+{
 public:
   /*
   * Setup motor in position, velocity or force control mode.
@@ -21,31 +21,35 @@ public:
   * velocity control mode: 1
   * effort / force control mode: 2
   */
-  bool setupMotor(myo_blink::setupMotor::Request &req,
-                  myo_blink::setupMotor::Response &res) {
-    enum controlMode { position, velocity, effort = 2, force = 2 };
-    switch (req.controlMode) {
-    case position:
-      flexray.initPositionControl((uint)0, (uint)0);
-      ROS_INFO(
-          "myo_blink: Set up motor 0 on ganglion 0 in position control mode.");
-      break;
-    case velocity:
-      flexray.initVelocityControl((uint)0, (uint)0);
-      ROS_INFO(
-          "myo_blink: Set up motor 0 on ganglion 0 in velocity control mode.");
-      break;
-    case effort:
-      flexray.initForceControl((uint)0, (uint)0);
-      ROS_INFO(
-          "myo_blink: Set up motor 0 on ganglion 0 in force control mode.");
-      break;
-    default:
-      ROS_ERROR("myo_blink: Received an unknown control mode. Check the enum: "
-                "position control mode: 0, velocity control mode: 1, effort / "
-                "force control mode: 2 ");
-      res.is_success = false;
-      return true;
+  bool setupMotor(myo_blink::setupMotor::Request &req, myo_blink::setupMotor::Response &res)
+  {
+    enum controlMode
+    {
+      position,
+      velocity,
+      effort = 2,
+      force = 2
+    };
+    switch (req.controlMode)
+    {
+      case position:
+        flexray.initPositionControl((uint)0, (uint)0);
+        ROS_INFO("myo_blink: Set up motor 0 on ganglion 0 in position control mode.");
+        break;
+      case velocity:
+        flexray.initVelocityControl((uint)0, (uint)0);
+        ROS_INFO("myo_blink: Set up motor 0 on ganglion 0 in velocity control mode.");
+        break;
+      case effort:
+        flexray.initForceControl((uint)0, (uint)0);
+        ROS_INFO("myo_blink: Set up motor 0 on ganglion 0 in force control mode.");
+        break;
+      default:
+        ROS_ERROR("myo_blink: Received an unknown control mode. Check the enum: "
+                  "position control mode: 0, velocity control mode: 1, effort / "
+                  "force control mode: 2 ");
+        res.is_success = false;
+        return true;
     }
     res.is_success = true;
     return true;
@@ -54,12 +58,15 @@ public:
   /*
   * Implements the service to move the motors.
   */
-  bool moveMotor(myo_blink::moveMotor::Request &req,
-                 myo_blink::moveMotor::Response &res) {
-    if (flexray.commandframe0[0].sp[0] = req.setpoint) {
+  bool moveMotor(myo_blink::moveMotor::Request &req, myo_blink::moveMotor::Response &res)
+  {
+    if (flexray.commandframe0[0].sp[0] = req.setpoint)
+    {
       flexray.updateCommandFrame();
       res.is_success = true;
-    } else {
+    }
+    else
+    {
       res.is_success = false;
     }
     return true;
@@ -71,7 +78,8 @@ public:
  * This tutorial demonstrates simple sending of messages over the ROS
  * system.
  */
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   /**
    * The ros::init() function needs to see argc and argv so that it can perform
    * any ROS arguments and name remapping that were provided at the command
@@ -120,10 +128,9 @@ int main(int argc, char **argv) {
    * than we can send them, the number here specifies how many messages to
    * buffer up before throwing some away.
    */
-  ros::Publisher numOGang_pubber = n.advertise<std_msgs::String>(
-      "/myo_blink/numberOfGanglionsConnected", 1000);
-  ros::Publisher displacement_pubber = n.advertise<std_msgs::Float32>(
-      "/myo_blink/muscles/0/sensors/displacement", 1000);
+  ros::Publisher numOGang_pubber = n.advertise<std_msgs::String>("/myo_blink/numberOfGanglionsConnected", 1000);
+  ros::Publisher displacement_pubber =
+      n.advertise<std_msgs::Float32>("/myo_blink/muscles/0/sensors/displacement", 1000);
 
   /*
   * This advertises the services with the roscore, making them available to call
@@ -131,10 +138,8 @@ int main(int argc, char **argv) {
   * convenient to call them from the command line:
   * rosservice call /myo_blink/setup /myo_blink/*tab - will autocomplete*
   */
-  ros::ServiceServer moveMotor_service =
-      n.advertiseService("/myo_blink/move", &MyoMotor::moveMotor, &myo_control);
-  ros::ServiceServer setupMotor_service = n.advertiseService(
-      "/myo_blink/setup", &MyoMotor::setupMotor, &myo_control);
+  ros::ServiceServer moveMotor_service = n.advertiseService("/myo_blink/move", &MyoMotor::moveMotor, &myo_control);
+  ros::ServiceServer setupMotor_service = n.advertiseService("/myo_blink/setup", &MyoMotor::setupMotor, &myo_control);
   /*
   * The actual flexrayusbinterface. It resides in the ROS package
   * flexrayusbinterface. If you look into both the CMakeLists.txt and
@@ -165,9 +170,7 @@ int main(int argc, char **argv) {
   * We are 'stuffing' the message with data
   */
   std::stringstream ss;
-  ss << "We currently have "
-     << myo_control.flexray.checkNumberOfConnectedGanglions()
-     << " ganglia connected.";
+  ss << "We currently have " << myo_control.flexray.checkNumberOfConnectedGanglions() << " ganglia connected.";
   msg.data = ss.str();
 
   ROS_INFO("%s", msg.data.c_str());
@@ -184,7 +187,8 @@ int main(int argc, char **argv) {
   * This while loop uses 'ros::ok()' to check if ROS/roscore is still running
   * and ctrl-c hasn't been pressed on this node.
   */
-  while (ros::ok()) {
+  while (ros::ok())
+  {
     /**
     * Read data from the flexray bus
     */
@@ -203,19 +207,15 @@ int main(int argc, char **argv) {
     polyPar[1] = 0.237536;
     polyPar[2] = -0.000032;
     polyPar[3] = 0;
-    float tendonDisplacement =
-        myo_control.flexray.GanglionData[0].muscleState[0].tendonDisplacement;
-    eff = polyPar[0] + polyPar[1] * tendonDisplacement +
-          polyPar[2] * powf(tendonDisplacement, 2.0f) +
+    float tendonDisplacement = myo_control.flexray.GanglionData[0].muscleState[0].tendonDisplacement;
+    eff = polyPar[0] + polyPar[1] * tendonDisplacement + polyPar[2] * powf(tendonDisplacement, 2.0f) +
           polyPar[3] * powf(tendonDisplacement, 3.0f);
 
     /*
     * Publish the spring displacement.
     */
     std_msgs::Float32 msg_displacement;
-    msg_displacement.data =
-        myo_control.flexray.GanglionData[0].muscleState[0].tendonDisplacement /
-        32768.0f;
+    msg_displacement.data = myo_control.flexray.GanglionData[0].muscleState[0].tendonDisplacement / 32768.0f;
     displacement_pubber.publish(msg_displacement);
     /**
     * This lets ROS read all messages, etc. There are a number of these
