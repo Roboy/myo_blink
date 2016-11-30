@@ -60,9 +60,8 @@ public:
   */
   bool moveMotor(myo_blink::moveMotor::Request &req, myo_blink::moveMotor::Response &res)
   {
-    if (flexray.commandframe0[0].sp[0] = req.setpoint)
+    if ((flexray.command.frame[0].sp[0] = req.setpoint))
     {
-      flexray.updateCommandFrame();
       res.is_success = true;
     }
     else
@@ -128,18 +127,18 @@ int main(int argc, char **argv)
    * than we can send them, the number here specifies how many messages to
    * buffer up before throwing some away.
    */
-  ros::Publisher numOGang_pubber = n.advertise<std_msgs::String>("/myo_blink/numberOfGanglionsConnected", 1000);
-  ros::Publisher displacement_pubber =
+  auto numOGang_pubber = n.advertise<std_msgs::String>("/myo_blink/numberOfGanglionsConnected", 1000);
+  auto displacement_pubber =
       n.advertise<std_msgs::Float32>("/myo_blink/muscles/0/sensors/displacement", 1000);
 
   /*
   * This advertises the services with the roscore, making them available to call
   * from other ROS nodes or via the command line. For this demo it is likely
   * convenient to call them from the command line:
-  * rosservice call /myo_blink/setup /myo_blink/*tab - will autocomplete*
+  * rosservice call /myo_blink/setup /myo_blink/<TAB>- will autocomplete*
   */
-  ros::ServiceServer moveMotor_service = n.advertiseService("/myo_blink/move", &MyoMotor::moveMotor, &myo_control);
-  ros::ServiceServer setupMotor_service = n.advertiseService("/myo_blink/setup", &MyoMotor::setupMotor, &myo_control);
+  auto moveMotor_service = n.advertiseService("/myo_blink/move", &MyoMotor::moveMotor, &myo_control);
+  auto setupMotor_service = n.advertiseService("/myo_blink/setup", &MyoMotor::setupMotor, &myo_control);
   /*
   * The actual flexrayusbinterface. It resides in the ROS package
   * flexrayusbinterface. If you look into both the CMakeLists.txt and
@@ -170,7 +169,7 @@ int main(int argc, char **argv)
   * We are 'stuffing' the message with data
   */
   std::stringstream ss;
-  ss << "We currently have " << myo_control.flexray.checkNumberOfConnectedGanglions() << " ganglia connected.";
+  ss << "We currently have " << myo_control.flexray.exchangeData().count() << " ganglia connected.";
   msg.data = ss.str();
 
   ROS_INFO("%s", msg.data.c_str());
@@ -198,9 +197,9 @@ int main(int argc, char **argv)
     * Access the motor connected on SPI 0 at ganglion 0
     */
     pos = myo_control.flexray.GanglionData[0].muscleState[0].actuatorPos *
-          myo_control.flexray.controlparams.radPerEncoderCount;
+          myo_control.flexray.command.params.radPerEncoderCount;
     vel = myo_control.flexray.GanglionData[0].muscleState[0].actuatorVel *
-          myo_control.flexray.controlparams.radPerEncoderCount;
+          myo_control.flexray.command.params.radPerEncoderCount;
 
     float polyPar[4];
     polyPar[0] = 0;
