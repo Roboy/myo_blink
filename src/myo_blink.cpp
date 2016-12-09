@@ -10,6 +10,7 @@
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
 
+#include <boost/optional.hpp>
 #include <sstream>
 
 class MyoMotor
@@ -72,29 +73,24 @@ public:
   }
 
   FlexRayHardwareInterface flexray;
-};
-/**
- * This tutorial demonstrates simple sending of messages over the ROS
- * system.
- */
-int main(int argc, char **argv)
-{
-  /**
-   * The ros::init() function needs to see argc and argv so that it can perform
-   * any ROS arguments and name remapping that were provided at the command
-   * line.
-   * For programmatic remappings you can use a different version of init() which
-   * takes
-   * remappings directly, but for most command-line programs, passing argc and
-   * argv is
-   * the easiest way to do it.  The third argument to init() is the name of the
-   * node.
-   *
-   * You must call one of the versions of ros::init() before using any other
-   * part of the ROS system.
-   */
-  ros::init(argc, argv, "talker");
 
+  static auto connect() -> boost::optional<MyoMotor>
+  {
+    if (auto flexray = FlexRayHardwareInterface::connect())
+    {
+      return MyoMotor(*flexray);
+    }
+    return boost::none;
+  }
+
+private:
+  MyoMotor(FlexRayHardwareInterface flexray) : flexray{ std::move(flexray) }
+  {
+  }
+};
+
+void blink(MyoMotor &myo_control)
+{
   /**
    * NodeHandle is the main access point to communications with the ROS system.
    * The first NodeHandle constructed will fully initialize this node, and the
@@ -102,13 +98,6 @@ int main(int argc, char **argv)
    * NodeHandle destructed will close down the node.
    */
   ros::NodeHandle n;
-
-  /*
-  * Instantiate the MyoMotor class. The class only really exists so that we do
-  * not have to have the FlexRayHardwareInterface instance a global - to use
-  * them in the functions outside of main.
-  */
-  MyoMotor myo_control;
 
   /**
    * The advertise() function is how you tell ROS that you want to
@@ -128,8 +117,7 @@ int main(int argc, char **argv)
    * buffer up before throwing some away.
    */
   auto numOGang_pubber = n.advertise<std_msgs::String>("/myo_blink/numberOfGanglionsConnected", 1000);
-  auto displacement_pubber =
-      n.advertise<std_msgs::Float32>("/myo_blink/muscles/0/sensors/displacement", 1000);
+  auto displacement_pubber = n.advertise<std_msgs::Float32>("/myo_blink/muscles/0/sensors/displacement", 1000);
 
   /*
   * This advertises the services with the roscore, making them available to call
@@ -224,6 +212,45 @@ int main(int argc, char **argv)
 
     loop_rate.sleep();
   }
+}
 
-  return false;
+/**
+ * This tutorial demonstrates simple sending of messages over the ROS
+ * system.
+ */
+int main(int argc, char **argv)
+{
+  /**
+   * The ros::init() function needs to see argc and argv so that it can perform
+   * any ROS arguments and name remapping that were provided at the command
+   * line.
+   * For programmatic remappings you can use a different version of init() which
+   * takes
+   * remappings directly, but for most command-line programs, passing argc and
+   * argv is
+   * the easiest way to do it.  The third argument to init() is the name of the
+   * node.
+   *
+   * You must call one of the versions of ros::init() before using any other
+   * part of the ROS system.
+   */
+  ros::init(argc, argv, "talker");
+
+  /*
+  * Instantiate the MyoMotor class. The class only really exists so that we do
+  * not have to have the FlexRayHardwareInterface instance a global - to use
+  * them in the functions outside of main.
+  */
+  for (;;)
+  {
+    if (auto motor = MyoMotor::connect())
+    {
+      blink(*motor);
+      break;
+    }
+    else
+    {
+      ROS_ERROR_STREAM("Could not connect to the myo motor\n");
+    }
+  }
 }
