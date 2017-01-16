@@ -59,7 +59,6 @@ find_package(catkin REQUIRED COMPONENTS
 add_service_files(
    FILES
    moveMotor.srv
-   setupMotor.srv
 )
 
 ## Generate actions in the 'action' folder

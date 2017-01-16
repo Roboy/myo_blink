@@ -6,63 +6,35 @@
 * fundamental message types.
 */
 #include "myo_blink/moveMotor.h"
-#include "myo_blink/setupMotor.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
 
 #include <boost/optional.hpp>
+#include <chrono>
 #include <sstream>
+#include <thread>
 
 class MyoMotor
 {
 public:
   /*
-  * Setup motor in position, velocity or force control mode.
-  * position control mode: 0
-  * velocity control mode: 1
-  * effort / force control mode: 2
-  */
-  bool setupMotor(myo_blink::setupMotor::Request &req, myo_blink::setupMotor::Response &res)
-  {
-    enum controlMode
-    {
-      position,
-      velocity,
-      effort = 2,
-      force = 2
-    };
-    switch (req.controlMode)
-    {
-      case position:
-        flexray.initPositionControl((uint)0, (uint)0);
-        ROS_INFO("myo_blink: Set up motor 0 on ganglion 0 in position control mode.");
-        break;
-      case velocity:
-        flexray.initVelocityControl((uint)0, (uint)0);
-        ROS_INFO("myo_blink: Set up motor 0 on ganglion 0 in velocity control mode.");
-        break;
-      case effort:
-        flexray.initForceControl((uint)0, (uint)0);
-        ROS_INFO("myo_blink: Set up motor 0 on ganglion 0 in force control mode.");
-        break;
-      default:
-        ROS_ERROR("myo_blink: Received an unknown control mode. Check the enum: "
-                  "position control mode: 0, velocity control mode: 1, effort / "
-                  "force control mode: 2 ");
-        res.is_success = false;
-        return true;
-    }
-    res.is_success = true;
-    return true;
-  }
-
-  /*
   * Implements the service to move the motors.
   */
   bool moveMotor(myo_blink::moveMotor::Request &req, myo_blink::moveMotor::Response &res)
   {
-    if ((flexray.command.frame[0].sp[0] = req.setpoint))
+    if (req.action == "move to")
     {
+      flexray.set(0, 0, FlexRayHardwareInterface::Controller::Potition, req.setpoint);
+      res.is_success = true;
+    }
+    else if (req.action == "move with")
+    {
+      flexray.set(0, 0, FlexRayHardwareInterface::Controller::Velocity, req.setpoint);
+      res.is_success = true;
+    }
+    else if (req.action == "keep")
+    {
+      flexray.set(0, 0, FlexRayHardwareInterface::Controller::Force, req.setpoint);
       res.is_success = true;
     }
     else
@@ -74,18 +46,23 @@ public:
 
   FlexRayHardwareInterface flexray;
 
-  static auto connect() -> boost::optional<MyoMotor>
+  static auto connect() -> variant<MyoMotor, FtResult>
   {
-    if (auto flexray = FlexRayHardwareInterface::connect())
-    {
-      return MyoMotor(*flexray);
-    }
-    return boost::none;
+    return FlexRayHardwareInterface::connect().match(
+        [](FlexRayHardwareInterface flex) -> variant<MyoMotor, FtResult> { return MyoMotor(flex); },
+        [](FtResult result) -> variant<MyoMotor, FtResult> { return result; });
   }
 
 private:
   MyoMotor(FlexRayHardwareInterface flexray) : flexray{ std::move(flexray) }
   {
+    //   using namespace std::chrono_literals;
+    flexray.initPositionControl((uint)0, (uint)0);
+    //   std::this_thread::sleep_for(2s);
+    flexray.initVelocityControl((uint)0, (uint)0);
+    //   std::this_thread::sleep_for(2s);
+    flexray.initForceControl((uint)0, (uint)0);
+    //  std::this_thread::sleep_for(2s);
   }
 };
 
@@ -116,7 +93,7 @@ void blink(MyoMotor &myo_control)
    * than we can send them, the number here specifies how many messages to
    * buffer up before throwing some away.
    */
-  auto numOGang_pubber = n.advertise<std_msgs::String>("/myo_blink/numberOfGanglionsConnected", 1000);
+  auto numOGang_pubber = n.advertise<std_msgs::String>("/myo_blink/numberOfGanglionsConnected", 1000, true);
   auto displacement_pubber = n.advertise<std_msgs::Float32>("/myo_blink/muscles/0/sensors/displacement", 1000);
 
   /*
@@ -126,7 +103,6 @@ void blink(MyoMotor &myo_control)
   * rosservice call /myo_blink/setup /myo_blink/<TAB>- will autocomplete*
   */
   auto moveMotor_service = n.advertiseService("/myo_blink/move", &MyoMotor::moveMotor, &myo_control);
-  auto setupMotor_service = n.advertiseService("/myo_blink/setup", &MyoMotor::setupMotor, &myo_control);
   /*
   * The actual flexrayusbinterface. It resides in the ROS package
   * flexrayusbinterface. If you look into both the CMakeLists.txt and
@@ -202,7 +178,7 @@ void blink(MyoMotor &myo_control)
     * Publish the spring displacement.
     */
     std_msgs::Float32 msg_displacement;
-    msg_displacement.data = myo_control.flexray.GanglionData[0].muscleState[0].tendonDisplacement / 32768.0f;
+    msg_displacement.data = myo_control.flexray.GanglionData[0].muscleState[0].tendonDisplacement / powf(2, 16);
     displacement_pubber.publish(msg_displacement);
     /**
     * This lets ROS read all messages, etc. There are a number of these
@@ -241,16 +217,14 @@ int main(int argc, char **argv)
   * not have to have the FlexRayHardwareInterface instance a global - to use
   * them in the functions outside of main.
   */
-  for (;;)
-  {
-    if (auto motor = MyoMotor::connect())
-    {
-      blink(*motor);
-      break;
-    }
-    else
-    {
-      ROS_ERROR_STREAM("Could not connect to the myo motor\n");
-    }
-  }
+  while (MyoMotor::connect().match(
+      [](MyoMotor motor) {
+        blink(motor);
+        return false;
+      },
+      [](FtResult result) {
+        ROS_ERROR_STREAM("Could not connect to the myo motor: " << result.str());
+        return true;
+      }))
+    ;
 }
