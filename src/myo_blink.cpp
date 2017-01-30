@@ -24,7 +24,7 @@ public:
   {
     if (req.action == "move to")
     {
-      flexray.set(0, 0, FlexRayHardwareInterface::Controller::Potition, req.setpoint);
+      flexray.set(0, 0, FlexRayHardwareInterface::Controller::Position, req.setpoint);
       res.is_success = true;
     }
     else if (req.action == "move with")
