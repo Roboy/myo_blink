@@ -95,6 +95,7 @@ void blink(MyoMotor &myo_control)
    */
   auto numOGang_pubber = n.advertise<std_msgs::String>("/myo_blink/numberOfGanglionsConnected", 1000, true);
   auto displacement_pubber = n.advertise<std_msgs::Float32>("/myo_blink/muscles/0/sensors/displacement", 1000);
+  auto aux_pubber = n.advertise<std_msgs::Float32>("/myo_blink/ganglions/0/sensors/0", 1000, true);
 
   /*
   * This advertises the services with the roscore, making them available to call
@@ -179,7 +180,11 @@ void blink(MyoMotor &myo_control)
     */
     std_msgs::Float32 msg_displacement;
     msg_displacement.data = myo_control.flexray.GanglionData[0].muscleState[0].tendonDisplacement / powf(2, 16);
+    msg_displacement.data = myo_control.flexray.GanglionData[0].muscleState[0].tendonDisplacement / powf(2, 16);
     displacement_pubber.publish(msg_displacement);
+    std_msgs::Float32 msg_aux;
+    msg_aux.data = myo_control.flexray.GanglionData[0].muscleState[0].actuatorPos;
+    aux_pubber.publish(msg_aux);
     /**
     * This lets ROS read all messages, etc. There are a number of these
     * 'spinners'
