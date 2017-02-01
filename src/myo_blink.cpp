@@ -46,15 +46,7 @@ public:
 
   FlexRayHardwareInterface flexray;
 
-  static auto connect() -> variant<MyoMotor, FtResult>
-  {
-    return FlexRayHardwareInterface::connect().match(
-        [](FlexRayHardwareInterface flex) -> variant<MyoMotor, FtResult> { return MyoMotor(flex); },
-        [](FtResult result) -> variant<MyoMotor, FtResult> { return result; });
-  }
-
-private:
-  MyoMotor(FlexRayHardwareInterface flexray) : flexray{ std::move(flexray) }
+  MyoMotor(UsbChannel&& usb) : flexray{std::move(usb)}
   {
     //   using namespace std::chrono_literals;
     flexray.initPositionControl((uint)0, (uint)0);
@@ -95,7 +87,8 @@ void blink(MyoMotor &myo_control)
    */
   auto numOGang_pubber = n.advertise<std_msgs::String>("/myo_blink/numberOfGanglionsConnected", 1000, true);
   auto displacement_pubber = n.advertise<std_msgs::Float32>("/myo_blink/muscles/0/sensors/displacement", 1000);
-  auto aux_pubber = n.advertise<std_msgs::Float32>("/myo_blink/ganglions/0/sensors/0", 1000, true);
+  auto j0_pubber = n.advertise<std_msgs::Float32>("/myo_blink/muscles/0/sensors/joint_angle", 1000, true);
+  auto j1_pubber = n.advertise<std_msgs::Float32>("/myo_blink/muscles/1/sensors/joint_angle", 1000, true);
 
   /*
   * This advertises the services with the roscore, making them available to call
@@ -126,15 +119,10 @@ void blink(MyoMotor &myo_control)
   std_msgs::String msg;
 
   /**
-  * Read data from the flexray bus
-  */
-  myo_control.flexray.exchangeData();
-
-  /**
   * We are 'stuffing' the message with data
   */
   std::stringstream ss;
-  ss << "We currently have " << myo_control.flexray.exchangeData().count() << " ganglia connected.";
+  ss << "We currently have " << myo_control.flexray.connected_ganglions().count() << " ganglia connected.";
   msg.data = ss.str();
 
   ROS_INFO("%s", msg.data.c_str());
@@ -153,25 +141,19 @@ void blink(MyoMotor &myo_control)
   */
   while (ros::ok())
   {
-    /**
-    * Read data from the flexray bus
-    */
-    myo_control.flexray.exchangeData();
-
     /*
     * Access the motor connected on SPI 0 at ganglion 0
     */
-    pos = myo_control.flexray.GanglionData[0].muscleState[0].actuatorPos *
-          myo_control.flexray.command.params.radPerEncoderCount;
-    vel = myo_control.flexray.GanglionData[0].muscleState[0].actuatorVel *
-          myo_control.flexray.command.params.radPerEncoderCount;
+      auto state = myo_control.flexray.read_muscle(0, 0);
+    pos = state.actuatorPos * myo_control.flexray.radPerEncoderCount;
+    vel = state.actuatorVel * myo_control.flexray.radPerEncoderCount;
 
     float polyPar[4];
     polyPar[0] = 0;
     polyPar[1] = 0.237536;
     polyPar[2] = -0.000032;
     polyPar[3] = 0;
-    float tendonDisplacement = myo_control.flexray.GanglionData[0].muscleState[0].tendonDisplacement;
+    float tendonDisplacement = state.tendonDisplacement;
     eff = polyPar[0] + polyPar[1] * tendonDisplacement + polyPar[2] * powf(tendonDisplacement, 2.0f) +
           polyPar[3] * powf(tendonDisplacement, 3.0f);
 
@@ -179,12 +161,14 @@ void blink(MyoMotor &myo_control)
     * Publish the spring displacement.
     */
     std_msgs::Float32 msg_displacement;
-    msg_displacement.data = myo_control.flexray.GanglionData[0].muscleState[0].tendonDisplacement / powf(2, 16);
-    msg_displacement.data = myo_control.flexray.GanglionData[0].muscleState[0].tendonDisplacement / powf(2, 16);
+    msg_displacement.data = state.tendonDisplacement / powf(2, 16);
+    msg_displacement.data = state.tendonDisplacement / powf(2, 16);
     displacement_pubber.publish(msg_displacement);
     std_msgs::Float32 msg_aux;
-    msg_aux.data = myo_control.flexray.GanglionData[0].muscleState[0].actuatorPos;
-    aux_pubber.publish(msg_aux);
+    msg_aux.data = state.jointPos;
+    j0_pubber.publish(msg_aux);
+    msg_aux.data = myo_control.flexray.read_muscle(0, 1).jointPos;
+    j1_pubber.publish(msg_aux);
     /**
     * This lets ROS read all messages, etc. There are a number of these
     * 'spinners'
@@ -222,8 +206,9 @@ int main(int argc, char **argv)
   * not have to have the FlexRayHardwareInterface instance a global - to use
   * them in the functions outside of main.
   */
-  while (MyoMotor::connect().match(
-      [](MyoMotor motor) {
+  while (UsbChannel::open("FTVDIMQW").match(
+      [](UsbChannel usb) {
+        MyoMotor motor{std::move(usb)};
         blink(motor);
         return false;
       },
