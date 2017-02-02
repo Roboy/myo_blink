@@ -24,17 +24,17 @@ public:
   {
     if (req.action == "move to")
     {
-      flexray.set(0, 0, FlexRayHardwareInterface::Controller::Position, req.setpoint);
+      flexray.set(0, 3, FlexRayHardwareInterface::Controller::Position, req.setpoint);
       res.is_success = true;
     }
     else if (req.action == "move with")
     {
-      flexray.set(0, 0, FlexRayHardwareInterface::Controller::Velocity, req.setpoint);
+      flexray.set(0, 3, FlexRayHardwareInterface::Controller::Velocity, req.setpoint);
       res.is_success = true;
     }
     else if (req.action == "keep")
     {
-      flexray.set(0, 0, FlexRayHardwareInterface::Controller::Force, req.setpoint);
+      flexray.set(0, 3, FlexRayHardwareInterface::Controller::Force, req.setpoint);
       res.is_success = true;
     }
     else
@@ -49,11 +49,11 @@ public:
   MyoMotor(UsbChannel&& usb) : flexray{std::move(usb)}
   {
     //   using namespace std::chrono_literals;
-    flexray.initPositionControl((uint)0, (uint)0);
+    flexray.initPositionControl((uint)0, (uint)3);
     //   std::this_thread::sleep_for(2s);
-    flexray.initVelocityControl((uint)0, (uint)0);
+    flexray.initVelocityControl((uint)0, (uint)3);
     //   std::this_thread::sleep_for(2s);
-    flexray.initForceControl((uint)0, (uint)0);
+    flexray.initForceControl((uint)0, (uint)3);
     //  std::this_thread::sleep_for(2s);
   }
 };
