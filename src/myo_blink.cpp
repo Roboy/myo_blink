@@ -6,6 +6,7 @@
 * fundamental message types.
 */
 #include "myo_blink/moveMotor.h"
+#include "myo_blink/muscleState.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
 
@@ -87,8 +88,11 @@ void blink(MyoMotor &myo_control)
    */
   auto numOGang_pubber = n.advertise<std_msgs::String>("/myo_blink/numberOfGanglionsConnected", 1000, true);
   auto displacement_pubber = n.advertise<std_msgs::Float32>("/myo_blink/muscles/0/sensors/displacement", 1000);
-  auto j0_pubber = n.advertise<std_msgs::Float32>("/myo_blink/muscles/0/sensors/joint_angle", 1000, true);
-  auto j1_pubber = n.advertise<std_msgs::Float32>("/myo_blink/muscles/1/sensors/joint_angle", 1000, true);
+  std::vector<ros::Publisher> muscle_pubs;
+  for (int i=0; i < 4; ++i)
+  {
+      muscle_pubs.emplace_back(n.advertise<myo_blink::muscleState>(std::string{"/myo_blink/muscles/"} + std::to_string(i) + "/sensors", 1000, true));
+  }
 
   /*
   * This advertises the services with the roscore, making them available to call
@@ -103,9 +107,6 @@ void blink(MyoMotor &myo_control)
   * package.xml you will find references to it. If catkin cannot find it at
   * buildtime it will fail the checks before actually starting the compilation.
   */
-  double pos = 0;
-  double vel = 0;
-  double eff = 0;
 
   /**
   * Defines the update rate of this ROS node
@@ -144,31 +145,17 @@ void blink(MyoMotor &myo_control)
     /*
     * Access the motor connected on SPI 0 at ganglion 0
     */
-      auto state = myo_control.flexray.read_muscle(0, 0);
-    pos = state.actuatorPos * myo_control.flexray.radPerEncoderCount;
-    vel = state.actuatorVel * myo_control.flexray.radPerEncoderCount;
-
-    float polyPar[4];
-    polyPar[0] = 0;
-    polyPar[1] = 0.237536;
-    polyPar[2] = -0.000032;
-    polyPar[3] = 0;
-    float tendonDisplacement = state.tendonDisplacement;
-    eff = polyPar[0] + polyPar[1] * tendonDisplacement + polyPar[2] * powf(tendonDisplacement, 2.0f) +
-          polyPar[3] * powf(tendonDisplacement, 3.0f);
-
-    /*
-    * Publish the spring displacement.
-    */
-    std_msgs::Float32 msg_displacement;
-    msg_displacement.data = state.tendonDisplacement / powf(2, 16);
-    msg_displacement.data = state.tendonDisplacement / powf(2, 16);
-    displacement_pubber.publish(msg_displacement);
-    std_msgs::Float32 msg_aux;
-    msg_aux.data = state.jointPos;
-    j0_pubber.publish(msg_aux);
-    msg_aux.data = myo_control.flexray.read_muscle(0, 1).jointPos;
-    j1_pubber.publish(msg_aux);
+      myo_blink::muscleState msg_state;
+      for (int i=0; i < 4; ++i)
+      {
+          auto state = myo_control.flexray.read_muscle(0, i);
+          msg_state.tendonDisplacement = state.tendonDisplacement;
+          msg_state.actuatorCurrent = state.actuatorCurrent;
+          msg_state.actuatorVel = state.actuatorVel;
+          msg_state.actuatorPos = state.actuatorPos;
+          msg_state.jointPos = state.jointPos;
+          muscle_pubs[i].publish(msg_state);
+      }
     /**
     * This lets ROS read all messages, etc. There are a number of these
     * 'spinners'
@@ -206,6 +193,7 @@ int main(int argc, char **argv)
   * not have to have the FlexRayHardwareInterface instance a global - to use
   * them in the functions outside of main.
   */
+  // while (UsbChannel::open("FTY4PDYV").match(
   while (UsbChannel::open("FTVDIMQW").match(
       [](UsbChannel usb) {
         MyoMotor motor{std::move(usb)};
