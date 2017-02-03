@@ -25,17 +25,17 @@ public:
   {
     if (req.action == "move to")
     {
-      flexray.set(0, 3, FlexRayHardwareInterface::Controller::Position, req.setpoint);
+      flexray.set(req.ganglion, req.muscle, FlexRayHardwareInterface::Controller::Position, req.setpoint);
       res.is_success = true;
     }
     else if (req.action == "move with")
     {
-      flexray.set(0, 3, FlexRayHardwareInterface::Controller::Velocity, req.setpoint);
+      flexray.set(req.ganglion, req.muscle, FlexRayHardwareInterface::Controller::Velocity, req.setpoint);
       res.is_success = true;
     }
     else if (req.action == "keep")
     {
-      flexray.set(0, 3, FlexRayHardwareInterface::Controller::Force, req.setpoint);
+      flexray.set(req.ganglion, req.muscle, FlexRayHardwareInterface::Controller::Force, req.setpoint);
       res.is_success = true;
     }
     else
@@ -47,15 +47,18 @@ public:
 
   FlexRayHardwareInterface flexray;
 
-  MyoMotor(UsbChannel&& usb) : flexray{std::move(usb)}
+  MyoMotor(UsbChannel &&usb) : flexray{ std::move(usb) }
   {
-    //   using namespace std::chrono_literals;
-    flexray.initPositionControl((uint)0, (uint)3);
-    //   std::this_thread::sleep_for(2s);
-    flexray.initVelocityControl((uint)0, (uint)3);
-    //   std::this_thread::sleep_for(2s);
-    flexray.initForceControl((uint)0, (uint)3);
-    //  std::this_thread::sleep_for(2s);
+    for (uint muscle = 0; muscle < 4; ++muscle)
+    {
+      //   using namespace std::chrono_literals;
+      flexray.initPositionControl((uint)0, (uint)muscle);
+      //   std::this_thread::sleep_for(2s);
+      flexray.initVelocityControl((uint)0, (uint)muscle);
+      //   std::this_thread::sleep_for(2s);
+      flexray.initForceControl((uint)0, (uint)muscle);
+      //  std::this_thread::sleep_for(2s);
+    }
   }
 };
 
@@ -89,9 +92,10 @@ void blink(MyoMotor &myo_control)
   auto numOGang_pubber = n.advertise<std_msgs::String>("/myo_blink/numberOfGanglionsConnected", 1000, true);
   auto displacement_pubber = n.advertise<std_msgs::Float32>("/myo_blink/muscles/0/sensors/displacement", 1000);
   std::vector<ros::Publisher> muscle_pubs;
-  for (int i=0; i < 4; ++i)
+  for (int i = 0; i < 4; ++i)
   {
-      muscle_pubs.emplace_back(n.advertise<myo_blink::muscleState>(std::string{"/myo_blink/muscles/"} + std::to_string(i) + "/sensors", 1000, true));
+    muscle_pubs.emplace_back(n.advertise<myo_blink::muscleState>(
+        std::string{ "/myo_blink/muscles/" } + std::to_string(i) + "/sensors", 1000, true));
   }
 
   /*
@@ -145,17 +149,17 @@ void blink(MyoMotor &myo_control)
     /*
     * Access the motor connected on SPI 0 at ganglion 0
     */
-      myo_blink::muscleState msg_state;
-      for (int i=0; i < 4; ++i)
-      {
-          auto state = myo_control.flexray.read_muscle(0, i);
-          msg_state.tendonDisplacement = state.tendonDisplacement;
-          msg_state.actuatorCurrent = state.actuatorCurrent;
-          msg_state.actuatorVel = state.actuatorVel;
-          msg_state.actuatorPos = state.actuatorPos;
-          msg_state.jointPos = state.jointPos;
-          muscle_pubs[i].publish(msg_state);
-      }
+    myo_blink::muscleState msg_state;
+    for (int i = 0; i < 4; ++i)
+    {
+      auto state = myo_control.flexray.read_muscle(0, i);
+      msg_state.tendonDisplacement = state.tendonDisplacement;
+      msg_state.actuatorCurrent = state.actuatorCurrent;
+      msg_state.actuatorVel = state.actuatorVel;
+      msg_state.actuatorPos = state.actuatorPos;
+      msg_state.jointPos = state.jointPos;
+      muscle_pubs[i].publish(msg_state);
+    }
     /**
     * This lets ROS read all messages, etc. There are a number of these
     * 'spinners'
@@ -194,15 +198,16 @@ int main(int argc, char **argv)
   * them in the functions outside of main.
   */
   // while (UsbChannel::open("FTY4PDYV").match(
-  while (UsbChannel::open("FTVDIMQW").match(
-      [](UsbChannel usb) {
-        MyoMotor motor{std::move(usb)};
-        blink(motor);
-        return false;
-      },
-      [](FtResult result) {
-        ROS_ERROR_STREAM("Could not connect to the myo motor: " << result.str());
-        return true;
-      }))
+  while (UsbChannel::open("FTVDIMQW")
+             .match(
+                 [](UsbChannel usb) {
+                   MyoMotor motor{ std::move(usb) };
+                   blink(motor);
+                   return false;
+                 },
+                 [](FtResult result) {
+                   ROS_ERROR_STREAM("Could not connect to the myo motor: " << result.str());
+                   return true;
+                 }))
     ;
 }
