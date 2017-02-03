@@ -197,17 +197,23 @@ int main(int argc, char **argv)
   * not have to have the FlexRayHardwareInterface instance a global - to use
   * them in the functions outside of main.
   */
-  // while (UsbChannel::open("FTY4PDYV").match(
-  while (UsbChannel::open("FTVDIMQW")
-             .match(
-                 [](UsbChannel usb) {
-                   MyoMotor motor{ std::move(usb) };
-                   blink(motor);
-                   return false;
-                 },
-                 [](FtResult result) {
-                   ROS_ERROR_STREAM("Could not connect to the myo motor: " << result.str());
-                   return true;
-                 }))
+  ros::NodeHandle nh;
+  std::string ftdi;
+  if (!nh.getParam("/ftdi_id", ftdi))
+  {
+    ROS_ERROR_STREAM("Please provide an ftdi device in ros parameter /myo_blink/ftdi_id");
+    return 1;
+  }
+  while (UsbChannel::open(ftdi).match(
+      [&](UsbChannel usb) {
+        ROS_INFO_STREAM("Connected to " << ftdi);
+        MyoMotor motor{ std::move(usb) };
+        blink(motor);
+        return false;
+      },
+      [](FtResult result) {
+        ROS_ERROR_STREAM("Could not connect to the myo motor: " << result.str());
+        return true;
+      }))
     ;
 }

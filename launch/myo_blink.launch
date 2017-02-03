@@ -1,3 +1,4 @@
 <launch>
   <node name="myo_blink_node" pkg="myo_blink" type="myo_blink"  output="screen"/>
+  <rosparam command="load" file="$(find myo_blink)/ftdi.yaml"/>
 </launch>
