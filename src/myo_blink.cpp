@@ -1,4 +1,5 @@
 #include "flexrayusbinterface/FlexRayHardwareInterface.hpp"
+#include "flexrayusbinterface/Parsers.hpp"
 #include "ros/ros.h"
 
 /*
@@ -25,17 +26,17 @@ public:
   {
     if (req.action == "move to")
     {
-      flexray.set(req.ganglion, req.muscle, FlexRayHardwareInterface::Controller::Position, req.setpoint);
+      flexray.set(req.ganglion, req.muscle, ControlMode::Position, req.setpoint);
       res.is_success = true;
     }
     else if (req.action == "move with")
     {
-      flexray.set(req.ganglion, req.muscle, FlexRayHardwareInterface::Controller::Velocity, req.setpoint);
+      flexray.set(req.ganglion, req.muscle, ControlMode::Velocity, req.setpoint);
       res.is_success = true;
     }
     else if (req.action == "keep")
     {
-      flexray.set(req.ganglion, req.muscle, FlexRayHardwareInterface::Controller::Force, req.setpoint);
+      flexray.set(req.ganglion, req.muscle, ControlMode::Force, req.setpoint);
       res.is_success = true;
     }
     else
@@ -47,18 +48,8 @@ public:
 
   FlexRayHardwareInterface flexray;
 
-  MyoMotor(UsbChannel &&usb) : flexray{ std::move(usb) }
+  MyoMotor(FlexRayHardwareInterface &&flexray) : flexray{ std::move(flexray) }
   {
-    for (uint muscle = 0; muscle < 4; ++muscle)
-    {
-      //   using namespace std::chrono_literals;
-      flexray.initPositionControl((uint)0, (uint)muscle);
-      //   std::this_thread::sleep_for(2s);
-      flexray.initVelocityControl((uint)0, (uint)muscle);
-      //   std::this_thread::sleep_for(2s);
-      flexray.initForceControl((uint)0, (uint)muscle);
-      //  std::this_thread::sleep_for(2s);
-    }
   }
 };
 
@@ -198,22 +189,35 @@ int main(int argc, char **argv)
   * them in the functions outside of main.
   */
   ros::NodeHandle nh;
-  std::string ftdi;
-  if (!nh.getParam("/ftdi_id", ftdi))
+  std::string bridge_description;
+  if (!nh.getParam("/flex_bridge", bridge_description))
   {
     ROS_ERROR_STREAM("Please provide an ftdi device in ros parameter /myo_blink/ftdi_id");
     return 1;
   }
-  while (UsbChannel::open(ftdi).match(
-      [&](UsbChannel usb) {
-        ROS_INFO_STREAM("Connected to " << ftdi);
-        MyoMotor motor{ std::move(usb) };
-        blink(motor);
-        return false;
-      },
-      [](FtResult result) {
-        ROS_ERROR_STREAM("Could not connect to the myo motor: " << result.str());
-        return true;
-      }))
-    ;
+  try
+  {
+    auto node = YAML::Load(bridge_description);
+    ROS_INFO_STREAM("Description parsed");
+    node = node["FlexRay"];
+    ROS_INFO_STREAM("Fetched yaml data");
+
+    FlexRayBus fbus = node.as<FlexRayBus>();
+    while (FlexRayHardwareInterface::connect(fbus).match(
+        [&](FlexRayHardwareInterface &flex) {
+          ROS_INFO_STREAM("Connected");
+          MyoMotor motor{ std::move(flex) };
+          blink(motor);
+          return false;
+        },
+        [](FtResult result) {
+          ROS_ERROR_STREAM("Could not connect to the myo motor: " << result.str());
+          return true;
+        }))
+      ;
+  }
+  catch (YAML::Exception e)
+  {
+    ROS_ERROR_STREAM("Error in /flex_bridge:" << e.mark.line << ":" << e.mark.column << ": " << e.msg);
+  }
 }

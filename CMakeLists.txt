@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
+find_package( yaml-cpp REQUIRED )
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -118,6 +120,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${YAML_CPP_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
@@ -135,11 +138,12 @@ add_executable(myo_blink src/myo_blink.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(myo_blink flexrayusbinterface_EXPORTED_TARGETS myo_blink_gencpp )
+add_dependencies(myo_blink ${catkin_EXPORTED_TARGETS} )
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(myo_blink
  ${catkin_LIBRARIES}
+ ${YAML_CPP_LIBRARIES}
 )
 
 #############
