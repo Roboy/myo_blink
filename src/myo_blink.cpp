@@ -203,21 +203,24 @@ int main(int argc, char **argv)
     ROS_INFO_STREAM("Fetched yaml data");
 
     FlexRayBus fbus = node.as<FlexRayBus>();
-    while (FlexRayHardwareInterface::connect(fbus).match(
-        [&](FlexRayHardwareInterface &flex) {
-          ROS_INFO_STREAM("Connected");
-          MyoMotor motor{ std::move(flex) };
-          blink(motor);
-          return false;
-        },
-        [](FtResult result) {
-          ROS_ERROR_STREAM("Could not connect to the myo motor: " << result.str());
-          return true;
-        }))
+    while (FlexRayHardwareInterface::connect(std::move(fbus))
+               .match(
+                   [&](FlexRayHardwareInterface &flex) {
+                     ROS_INFO_STREAM("Connected");
+                     MyoMotor motor{ std::move(flex) };
+                     blink(motor);
+                     return false;
+                   },
+                   [&](std::pair<FlexRayBus, FtResult> &result) {
+                     ROS_ERROR_STREAM("Could not connect to the myo motor: " << result.second.str());
+                     fbus = std::move(result.first);
+                     return true;
+                   }))
       ;
   }
   catch (YAML::Exception e)
   {
-    ROS_ERROR_STREAM("Error in /flex_bridge:" << e.mark.line << ":" << e.mark.column << ": " << e.msg);
+    ROS_ERROR_STREAM("Error in /flex_bridge[" << e.mark.pos << "]:" << e.mark.line << ":" << e.mark.column << ": "
+                                              << e.msg);
   }
 }
