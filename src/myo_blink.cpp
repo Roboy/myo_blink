@@ -143,13 +143,16 @@ void blink(MyoMotor &myo_control)
     myo_blink::muscleState msg_state;
     for (int i = 0; i < 4; ++i)
     {
-      auto state = myo_control.flexray.read_muscle(0, i);
-      msg_state.tendonDisplacement = state.tendonDisplacement;
-      msg_state.actuatorCurrent = state.actuatorCurrent;
-      msg_state.actuatorVel = state.actuatorVel;
-      msg_state.actuatorPos = state.actuatorPos;
-      msg_state.jointPos = state.jointPos;
-      muscle_pubs[i].publish(msg_state);
+      myo_control.flexray.read_muscle(0, i).match(
+          [&](muscleState_t &state) {
+            msg_state.tendonDisplacement = state.tendonDisplacement;
+            msg_state.actuatorCurrent = state.actuatorCurrent;
+            msg_state.actuatorVel = state.actuatorVel;
+            msg_state.actuatorPos = state.actuatorPos;
+            msg_state.jointPos = state.jointPos;
+            muscle_pubs[i].publish(msg_state);
+          },
+          [](FlexRayHardwareInterface::ReadError) {});
     }
     /**
     * This lets ROS read all messages, etc. There are a number of these
