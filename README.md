@@ -93,19 +93,15 @@ Read the spring displacement sensor
 rostopic echo /myo_blink/muscles/0/sensors/displacement -c
 ```
 
-Change/enable controllers
--------------------------
-controlMode:
-- 0 - PositionController
-- 1 - VelocityController
-- 2 - Effort / ForceController
-
-```
-rosservice call /myo_blink/setup "controlMode: 0"
-```
-
 Move the motor
---------------
+-------------------------
+Control mode (action):
+- 'move to' - PositionController
+- 'move with' - VelocityController
+- 'keep' - Effort / ForceController
 ```
-rosservice call /myo_blink/move "setpoint: 1.0"
+rosservice call /myo_blink/move "ganglion: 0
+muscle: 1
+action: 'move to'
+setpoint: 10.0" 
 ```
