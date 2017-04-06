@@ -69,6 +69,14 @@ cd .. # you should be in catkin_workspace
 catkin_make
 ```
 
+Configure it
+------------
+Update the serial number in the yaml config file in `.../myo_blink/config` to match the serial of your FTDI device.
+
+i.e. line 2: https://github.com/Roboy/myo_blink/blob/master/config/myoarm_controllers.yaml
+
+Adapt other parameters in the yaml file to your liking.
+
 Play with it
 ============
 
