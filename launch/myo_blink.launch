@@ -1,3 +1,4 @@
 <launch>
-  <node name="myo_blink_node" pkg="myo_blink" type="myo_blink"  output="screen"/>
+  <node name="myo_blink_node" pkg="myo_blink" type="myo_blink"  output="screen" launch-prefix="valgrind --track-origins=yes"/>
+  <param name="flex_bridge" textfile="$(find myo_blink)/config/myoarm_controllers.yaml" />
 </launch>
