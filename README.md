@@ -37,7 +37,7 @@ Once you are inside the container or
 if you are running 16.04 and kinetic directly run through the following commands
 ```
 apt-get update
-apt-get install -y libncurses5-dev wget cmake
+apt-get install -y wget cmake
 ```
 
 ### Install the ros nodes
