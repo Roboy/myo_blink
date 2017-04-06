@@ -1,4 +1,11 @@
 <launch>
-  <node name="myo_blink_node" pkg="myo_blink" type="myo_blink"  output="screen" launch-prefix="valgrind --track-origins=yes"/>
+
+ <!-- GDB functionality -->
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+
+  <node name="myo_blink_node" pkg="myo_blink" type="myo_blink"  output="screen" launch-prefix="$(arg launch_prefix)"/>
   <param name="flex_bridge" textfile="$(find myo_blink)/config/myoarm_controllers.yaml" />
 </launch>
