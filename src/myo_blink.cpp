@@ -14,6 +14,7 @@
 
 #include <boost/optional.hpp>
 #include <chrono>
+#include <iostream>
 #include <map>
 #include <sstream>
 #include <thread>
@@ -144,14 +145,14 @@ void blink(MyoMotor &myo_control)
                                             1000, true));
   }
 
+
   /*
   * This advertises the services with the roscore, making them available to call
   * from other ROS nodes or via the command line. For this demo it is likely
   * convenient to call them from the command line:
   * rosservice call /myo_blink/setup /myo_blink/<TAB>- will autocomplete*
   */
-  auto moveMotor_service =
-      n.advertiseService("/myo_blink/move", &MyoMotor::moveMotor, &myo_control);
+  auto moveMotor_service = n.advertiseService("/myo_blink/move", &MyoMotor::moveMotor, &myo_control);
   /*
   * The actual flexrayusbinterface. It resides in the ROS package
   * flexrayusbinterface. If you look into both the CMakeLists.txt and
@@ -210,11 +211,12 @@ void blink(MyoMotor &myo_control)
             msg_state.actuatorPos = state.actuatorPos;
             msg_state.jointPos = state.jointPos;
             muscle_pubs.at(name).publish(msg_state);
-            if (i==0 || i==1)
-            {
-              angle.data = state.jointPos;
-              joint_pubs[i].publish(angle);
-            }
+            ROS_INFO_STREAM(name);
+//            if (name=="0" || name=="1")
+//            {
+//              angle.data = state.jointPos;
+//              joint_pubs[i].publish(angle);
+//            }
           },
           [](FlexRayHardwareInterface::ReadError) {});
     }
