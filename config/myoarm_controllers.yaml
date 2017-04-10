@@ -1,5 +1,5 @@
 FlexRay:
-  serial: FTY4PDYV
+  serial: FTVDIMQW
 
   _SoftSpring: &SOFT
     constant: 0.3
@@ -9,7 +9,7 @@ FlexRay:
 
   ganglion 0:
     muscle 0:
-      id: left_biceps
+      id: biceps
 
       Force:
         output_pos_max: 1000
@@ -62,7 +62,7 @@ FlexRay:
         sp_pos_max: 100.0
 
     muscle 1:
-      id: left_triceps
+      id: triceps
 
       Force:
         output_pos_max: 1000
@@ -115,7 +115,7 @@ FlexRay:
         sp_pos_max: 100.0
 
     muscle 2:
-      id: left_supraspinatus
+      id: forearm
 
       Force:
         output_pos_max: 1000
@@ -168,7 +168,60 @@ FlexRay:
         sp_pos_max: 100.0
 
     muscle 3:
-      id: left_pectoralis
+      id: hand
+
+      Force:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 70.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+        torque: 1.0
+        spring: *SOFT
+
+      Velocity:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 200.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+      Position:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 100.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+  ganglion 1:
+    muscle 1:
+      id: shoulder_top
 
       Force:
         output_pos_max: 1000
@@ -220,3 +273,426 @@ FlexRay:
         sp_pos_min: -100.0
         sp_pos_max: 100.0
 
+  ganglion 2:
+    muscle 0:
+      id: shoulder_front_3
+
+      Force:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 70.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+        torque: 1.0
+        spring: *SOFT
+
+      Velocity:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 200.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+      Position:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 100.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+    muscle 1:
+      id: shoulder_front_1
+
+      Force:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 70.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+        torque: 1.0
+        spring: *SOFT
+
+      Velocity:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 200.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+      Position:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 100.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+    muscle 2:
+      id: shoulder_front_0
+
+      Force:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 70.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+        torque: 1.0
+        spring: *SOFT
+
+      Velocity:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 200.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+      Position:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 100.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+    muscle 3:
+      id: shoulder_front_2
+
+      Force:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 70.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+        torque: 1.0
+        spring: *SOFT
+
+      Velocity:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 200.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+      Position:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 100.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+  ganglion 3:
+    muscle 0:
+      id: shoulder_back_1
+
+      Force:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 70.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+        torque: 1.0
+        spring: *SOFT
+
+      Velocity:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 200.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+      Position:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 100.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+    muscle 1:
+      id: shoulder_back_3
+
+      Force:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 70.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+        torque: 1.0
+        spring: *SOFT
+
+      Velocity:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 200.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+      Position:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 100.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+    muscle 2:
+      id: shoulder_back_2
+
+      Force:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 70.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+        torque: 1.0
+        spring: *SOFT
+
+      Velocity:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 200.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+      Position:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 100.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+    muscle 3:
+      id: shoulder_back_0
+
+      Force:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 70.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+        torque: 1.0
+        spring: *SOFT
+
+      Velocity:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 200.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
+
+      Position:
+        output_pos_max: 1000
+        output_neg_max: -1000
+        time_period: 100.0
+        rad_per_encoder_count: 0.00005788606746738269
+        P_gain: 100.0
+        I_gain: 0.0
+        D_gain: 0.0
+        forward_gain: 0.0
+        dead_band: 0.0
+        integral: 0.0
+        integral_pos_min: 0.0
+        integral_pos_max: 0.0
+        sp_pos_min: -100.0
+        sp_pos_max: 100.0
