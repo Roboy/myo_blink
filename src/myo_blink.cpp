@@ -72,8 +72,7 @@ void blink(MyoMotor &myo_control) {
    */
   auto numOGang_pubber = n.advertise<std_msgs::String>(
       "/myo_blink/numberOfGanglionsConnected", 1000, true);
-  auto displacement_pubber = n.advertise<std_msgs::Float32>(
-      "/myo_blink/muscles/0/sensors/displacement", 1000);
+
   std::map<std::string, ros::Publisher> muscle_pubs;
   std::vector<std::string> motorNames = myo_control.flexray.get_muscle_names();
 
