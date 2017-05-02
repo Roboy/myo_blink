@@ -1,5 +1,4 @@
-int32 ganglion # 0 to 5
-int32 muscle # 0 to 3
+string muscle # 0 to 3
 string action # `move to`, `move with` or `keep`
 float32 setpoint # radians, radians/sec or newtons
 ---
