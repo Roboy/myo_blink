@@ -129,9 +129,9 @@ void blink(MyoMotor &myo_control)
   auto numOGang_pubber = n.advertise<std_msgs::String>(
       "/myo_blink/numberOfGanglionsConnected", 1000, true);
 
-  std::vector<ros::Publisher> joint_pubs;
-  joint_pubs.emplace_back(n.advertise<std_msgs::Float32>("/myo_blink/joints/upper/angle", 1000)); // upper joint
-  joint_pubs.emplace_back(n.advertise<std_msgs::Float32>("/myo_blink/joints/lower/angle", 1000)); //lower joint
+  std::map<std::string, ros::Publisher> joint_pubs;
+  joint_pubs.emplace("upper", n.advertise<std_msgs::Float32>("/myo_blink/joints/upper/angle", 1000)); // upper joint
+  joint_pubs.emplace("lower", n.advertise<std_msgs::Float32>("/myo_blink/joints/lower/angle", 1000)); //lower joint
 
 
   std::map<std::string, ros::Publisher> muscle_pubs;
@@ -211,12 +211,17 @@ void blink(MyoMotor &myo_control)
             msg_state.actuatorPos = state.actuatorPos;
             msg_state.jointPos = state.jointPos;
             muscle_pubs.at(name).publish(msg_state);
-            ROS_INFO_STREAM(name);
-//            if (name=="0" || name=="1")
-//            {
-//              angle.data = state.jointPos;
-//              joint_pubs[i].publish(angle);
-//            }
+            // TODO get rid of this magic!
+            if (name=="forearm")
+            {
+              angle.data = state.jointPos;
+              joint_pubs["upper"].publish(angle);
+            }
+              else if (name=="hand")
+            {
+                angle.data = state.jointPos;
+                joint_pubs["lower"].publish(angle);
+            }
           },
           [](FlexRayHardwareInterface::ReadError) {});
     }
