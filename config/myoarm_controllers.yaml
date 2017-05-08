@@ -2,18 +2,18 @@ FlexRay:
   serial: FTVDIMQW
 
   _SoftSpring: &SOFT
-    constant: 0.3
-    linear: 0.9
-    quadratic: 0.01
-    cubic: 0.002
+    constant: 38
+    linear: 0.2
+    quadratic: 0.0
+    cubic: 0.0
 
   ganglion 0:
     muscle 0:
       id: biceps
 
       Force:
-        output_pos_max: 1000
-        output_neg_max: -1000
+        output_pos_max: 4000
+        output_neg_max: -4000
         time_period: 100.0
         rad_per_encoder_count: 0.00005788606746738269
         P_gain: 70.0
@@ -65,8 +65,8 @@ FlexRay:
       id: triceps
 
       Force:
-        output_pos_max: 1000
-        output_neg_max: -1000
+        output_pos_max: 4000
+        output_neg_max: -4000
         time_period: 100.0
         rad_per_encoder_count: 0.00005788606746738269
         P_gain: 70.0
@@ -118,8 +118,8 @@ FlexRay:
       id: forearm
 
       Force:
-        output_pos_max: 1000
-        output_neg_max: -1000
+        output_pos_max: 4000
+        output_neg_max: -4000
         time_period: 100.0
         rad_per_encoder_count: 0.00005788606746738269
         P_gain: 70.0
@@ -171,8 +171,8 @@ FlexRay:
       id: hand
 
       Force:
-        output_pos_max: 1000
-        output_neg_max: -1000
+        output_pos_max: 4000
+        output_neg_max: -4000
         time_period: 100.0
         rad_per_encoder_count: 0.00005788606746738269
         P_gain: 70.0
