@@ -83,7 +83,6 @@ void initialize(MyoMotor &myo_control)
       }
 
       ROS_INFO_STREAM("Press ENTER to initialize the current positions as 0");
-
       if (std::cin.get() == '\n')
       {
           for (auto &name : myo_control.flexray.get_muscle_names()) {
@@ -283,13 +282,17 @@ int main(int argc, char **argv) {
     while (FlexRayHardwareInterface::connect(std::move(fbus))
                .match(
                    [&](FlexRayHardwareInterface &flex) {
-                     ROS_INFO_STREAM("Connected");
-                     MyoMotor motor{std::move(flex)};
-                     motor.minForce = node["_SoftSpring"]["constant"].as<double>();
-                     ROS_INFO_STREAM("Minimum force to apply to the motor: " << motor.minForce);
-                     initialize(motor);
-                     blink(motor);
-                     return false;
+                    ROS_INFO_STREAM("Connected");
+                    MyoMotor motor{std::move(flex)};
+                    motor.minForce = node["_SoftSpring"]["constant"].as<double>();
+                    ROS_INFO_STREAM("Minimum force to apply to the motor: " << motor.minForce);
+
+                    ROS_INFO_STREAM("Press ENTER to initialize, S to skip initialization");
+                    if (std::cin.get() == '\n') {
+                        initialize(motor);
+                    }
+                    blink(motor);
+                    return false;
                    },
                    [&](std::pair<FlexRayBus, FtResult> &result) {
                      ROS_ERROR_STREAM("Could not connect to the myo motor: "
