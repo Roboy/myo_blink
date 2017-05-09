@@ -93,3 +93,7 @@ muscle: 1
 action: 'move to'
 setpoint: 10.0" 
 ```
+### Units
+- Position controller ('move to' command) expects the setpoint in radians 
+- actuatorPosition and tendonDisplacement are displayed in encoder ticks
+- 1 rad ~ 17275 ticks
