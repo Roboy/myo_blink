@@ -35,10 +35,15 @@ class MyoMotor {
         }
         else if (req.action == "keep")
         {
-          if (req.setpoint < this->minForce)
+          if (req.setpoint < minForce)
           {
-            ROS_ERROR_STREAM("Cannot keep requested force of " << req.setpoint << " N. Minimum possible force is: " << this->minForce << " N.");
+            ROS_ERROR_STREAM("Cannot keep requested force of " << req.setpoint << " N. Minimum possible force is: " << minForce << " N.");
             res.is_success=false;
+          }
+          else if (req.setpoint > maxForce)
+          {
+              ROS_ERROR_STREAM("Cannot keep requested force of " << req.setpoint << " N. Maximum possible force is: " << maxForce << " N.");
+              res.is_success = false;
           }
           else
           {
@@ -59,14 +64,24 @@ class MyoMotor {
       FlexRayHardwareInterface flexray;
 
       double minForce;
+      double maxForce;
+      std::map<std::string, int> maxContractileDisplacement;
       std::map<std::string, double> offset; //offset between position 0 and actuators position when link is perpendicular to the ground
+      bool initialized;
 
       MyoMotor(FlexRayHardwareInterface &&flexray) : flexray{ std::move(flexray) }
       {
           for (auto &name : flexray.get_muscle_names())
           {
               offset[name] = 0;
+
           }
+          initialized = false;
+          maxForce = 70.0;
+          maxContractileDisplacement["biceps"] = 12;
+          maxContractileDisplacement["triceps"] = 12;
+          maxContractileDisplacement["hand"] = 5;
+          maxContractileDisplacement["forearm"] = 5;
       }
     };
 
@@ -95,6 +110,7 @@ void initialize(MyoMotor &myo_control)
               myo_control.offset[name] = (int) state.actuatorPos*0.00005788606746738269;
             },
             [](FlexRayHardwareInterface::ReadError) {});
+          myo_control.initialized = true;
         }
       }
     // }
@@ -215,6 +231,18 @@ void blink(MyoMotor &myo_control)
             msg_state.actuatorPos = state.actuatorPos;
             msg_state.jointPos = state.jointPos;
             muscle_pubs.at(name).publish(msg_state);
+
+            // if the physical limit of joint angle is reached, fix current position and don't move the motor
+            // works only if the motors were initialized
+            // values are currently tuned for the straight upright position for all links
+            if (myo_control.initialized)
+            {
+                if (msg_state.contractileDisplacement >= myo_control.maxContractileDisplacement[name])
+                {
+                    ROS_WARN_STREAM("Muscle " << name << " has reached its limit. Setting force to minimum (" << std::to_string(myo_control.minForce) << " N).");
+                    myo_control.flexray.set(name, ControlMode::Force, myo_control.minForce);
+                }
+            }
             // TODO get rid of this magic!
             if (name=="forearm")
             {
