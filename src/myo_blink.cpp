@@ -1,6 +1,7 @@
 #include "flexrayusbinterface/FlexRayHardwareInterface.hpp"
 #include "flexrayusbinterface/Parsers.hpp"
 #include "ros/ros.h"
+#include "json.hpp"
 #include "stdlib.h"
 
 /*
@@ -10,6 +11,7 @@
 #include "myo_blink/moveMotor.h"
 #include "myo_blink/muscleState.h"
 #include "std_msgs/Float32.h"
+#include "std_msgs/Int32.h"
 #include "std_msgs/String.h"
 
 #include <boost/optional.hpp>
@@ -18,6 +20,8 @@
 #include <map>
 #include <sstream>
 #include <thread>
+
+using json = nlohmann::json;
 
 class MyoMotor {
     public:
@@ -59,7 +63,19 @@ class MyoMotor {
       }
 
 
-
+    /*
+     * Implements the message callback for force control.
+     */
+      void moveCallback(const std_msgs::String::ConstPtr& msg)
+    {
+//        ROS_INFO_STREAM("I heard: " << std::to_string(msg->data));
+        auto commandJSON = json::parse(msg->data);
+        ROS_INFO_STREAM(commandJSON["actuatorCurrent"]);
+//        myo_blink::moveMotor::Response res = false;
+//        myo_blink::moveMotor::Request req;
+//        req.setpoint
+//        moveMotor(msg->data, res);
+    }
 
       FlexRayHardwareInterface flexray;
 
@@ -173,7 +189,11 @@ void blink(MyoMotor &myo_control)
   */
   auto moveMotor_service =
       n.advertiseService("/myo_blink/move", &MyoMotor::moveMotor, &myo_control);
-  /*
+
+
+  ros::Subscriber sub = n.subscribe("/myo_blink/command", 1000, &MyoMotor::moveCallback, &myo_control);
+
+    /*
   * The actual flexrayusbinterface. It resides in the ROS package
   * flexrayusbinterface. If you look into both the CMakeLists.txt and
   * package.xml you will find references to it. If catkin cannot find it at
