@@ -121,9 +121,9 @@ void initialize(MyoMotor &myo_control)
             [&](muscleState_t &state)
             {
               // keep motors in the current position
-              myo_control.flexray.set(name, ControlMode::Position, (int) state.actuatorPos*0.00005788606746738269); //TODO: read this magic number from yaml file
-              ROS_INFO_STREAM("Motor: " << name << " Setting offset to: " << std::to_string((int) state.actuatorPos*0.00005788606746738269));
-              myo_control.offset[name] = (int) state.actuatorPos*0.00005788606746738269;
+              myo_control.flexray.set(name, ControlMode::Position, state.actuatorPos*0.0000579); //TODO: read this magic number from yaml file
+              ROS_INFO_STREAM("Motor: " << name << " Setting offset to: " << std::to_string(state.actuatorPos*0.0000579));
+              myo_control.offset[name] = state.actuatorPos*0.00005788606746738269;
             },
             [](FlexRayHardwareInterface::ReadError) {});
           myo_control.initialized = true;
