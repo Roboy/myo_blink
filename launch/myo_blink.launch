@@ -5,7 +5,17 @@
   <arg unless="$(arg debug)" name="launch_prefix" value="" />
   <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
 
-
+ 
   <node name="myo_blink_node" pkg="myo_blink" type="myo_blink"  output="screen" launch-prefix="$(arg launch_prefix)"/>
   <param name="flex_bridge" textfile="$(find myo_blink)/config/myoarm_controllers.yaml" />
+
+  <!-- Limit topic rates -->
+  <!-- <arg name="rate" default = 1 />
+  <arg muscles default=["biceps", "triceps", "wrist_flexor", "wrist_extensor"] /> -->
+  <node name="myo_blink_biceps_throttler" type="throttle" pkg="topic_tools" args="messages /myo_blink/muscles/biceps/sensors 1 /throttle/myo_blink/muscles/biceps/sensors" />
+  <node name="myo_blink_triceps_throttler" type="throttle" pkg="topic_tools" args="messages /myo_blink/muscles/triceps/sensors 1 /throttle/myo_blink/muscles/triceps/sensors" />
+  <node name="myo_blink_wrist_ext_throttler" type="throttle" pkg="topic_tools" args="messages /myo_blink/muscles/wrist_extensor/sensors 1 /throttle/myo_blink/muscles/wrist_extensor/sensors" />
+  <node name="myo_blink_wrist_flex_throttler" type="throttle" pkg="topic_tools" args="messages /myo_blink/muscles/wrist_flexor/sensors 1 /throttle/myo_blink/muscles/wrist_flexor/sensors" />
+  <node name="myo_blink_joint_u_throttler" type="throttle" pkg="topic_tools" args="messages /myo_blink/joints/upper/angle 1 /throttle/myo_blink/joints/upper/angle" />
+  <node name="myo_blink_joint_l_throttler" type="throttle" pkg="topic_tools" args="messages /myo_blink/joints/lower/angle 1 /throttle/myo_blink/joints/lower/angle" />
 </launch>
