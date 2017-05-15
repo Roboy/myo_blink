@@ -9,7 +9,7 @@ FlexRay:
 
   ganglion 0:
     muscle 0:
-      id: forearm
+      id: wrist_flexor
 
       Force:
         output_pos_max: 4000
@@ -62,7 +62,7 @@ FlexRay:
         sp_pos_max: 100.0
 
     muscle 1:
-      id: hand
+      id: wrist_extensor
 
       Force:
         output_pos_max: 4000
