@@ -10,6 +10,7 @@
 */
 #include "myo_blink/moveMotor.h"
 #include "myo_blink/muscleState.h"
+#include "myo_blink/muscleCommand.h"
 #include "std_msgs/Float32.h"
 #include "std_msgs/Int32.h"
 #include "std_msgs/String.h"
@@ -25,56 +26,115 @@ using json = nlohmann::json;
 
 class MyoMotor {
     public:
+
+    bool moveMotor(std::string muscle, std::string action, float setpoint)
+    {
+        if (action == "move to") {
+            flexray.set(muscle, ControlMode::Position, setpoint);
+            return true;
+        }
+
+        else if (action == "move with") {
+            flexray.set(muscle, ControlMode::Velocity, setpoint);
+            return true;
+        }
+
+        else if (action == "keep") {
+            if (setpoint < minForce)
+            {
+                ROS_ERROR_STREAM("Cannot keep requested force of " << setpoint << " N. Minimum possible force is: " << minForce << " N.");
+                return false;
+            }
+            else if (setpoint > maxForce)
+            {
+                ROS_ERROR_STREAM("Cannot keep requested force of " << setpoint << " N. Maximum possible force is: " << maxForce << " N.");
+                return false;
+            }
+            else
+            {
+                flexray.set(muscle, ControlMode::Force, setpoint);
+                return true;
+            }
+        }
+
+        return false;
+
+    }
       /*
       * Implements the service to move the motors.
       */
-      bool moveMotor(myo_blink::moveMotor::Request &req,
+      bool moveMotorService(myo_blink::moveMotor::Request &req,
                      myo_blink::moveMotor::Response &res) {
-        if (req.action == "move to") {
-          flexray.set(req.muscle, ControlMode::Position, req.setpoint);
-          res.is_success = true;
-        } else if (req.action == "move with") {
-          flexray.set(req.muscle, ControlMode::Velocity, req.setpoint);
-          res.is_success = true;
-        }
-        else if (req.action == "keep")
-        {
-          if (req.setpoint < minForce)
-          {
-            ROS_ERROR_STREAM("Cannot keep requested force of " << req.setpoint << " N. Minimum possible force is: " << minForce << " N.");
-            res.is_success=false;
-          }
-          else if (req.setpoint > maxForce)
-          {
-              ROS_ERROR_STREAM("Cannot keep requested force of " << req.setpoint << " N. Maximum possible force is: " << maxForce << " N.");
-              res.is_success = false;
-          }
-          else
-          {
-            flexray.set(req.muscle, ControlMode::Force, req.setpoint);
-            res.is_success = true;
-          }
-        }
-        else
-        {
-          res.is_success = false;
-        }
-        return true;
+          return moveMotor(req.muscle, req.action, req.setpoint);
       }
 
 
     /*
      * Implements the message callback for force control.
      */
-      void moveCallback(const std_msgs::String::ConstPtr& msg)
+      void moveMotorCallback(const std_msgs::String::ConstPtr& msg)
     {
-//        ROS_INFO_STREAM("I heard: " << std::to_string(msg->data));
         auto commandJSON = json::parse(msg->data);
-        ROS_INFO_STREAM(commandJSON["actuatorCurrent"]);
-//        myo_blink::moveMotor::Response res = false;
-//        myo_blink::moveMotor::Request req;
-//        req.setpoint
-//        moveMotor(msg->data, res);
+        ROS_INFO_STREAM("I heard: " << commandJSON["muscle"] << commandJSON["action"] << commandJSON["setpoint"] );
+        std::string muscle = commandJSON["muscle"];
+        std::string action = commandJSON["action"];
+        float setpoint = commandJSON["setpoint"];
+        moveMotor(muscle, action, setpoint);
+    }
+
+    /*
+     * holds equal force on all motors
+     */
+    void force_all(float setpoint)
+    {
+        for (auto &name : flexray.get_muscle_names())
+        {
+            flexray.set(name, ControlMode::Force, setpoint);
+        }
+
+    }
+
+    /*
+     * Implements message callback to call force_init()
+     */
+    void forceInitCallback(const std_msgs::String::ConstPtr& msg)
+    {
+        ROS_INFO_STREAM("holding force of 43 N on each motor");
+        force_all(43.0);
+    }
+
+    void relaxAllCallback(const std_msgs::String::ConstPtr& msg)
+    {
+        ROS_INFO_STREAM("trying to relax");
+        force_all(38.0);
+    }
+
+    /*
+    *  initializes in the current position
+    */
+    void initialize()
+    {
+
+        for (auto &name : flexray.get_muscle_names()) {
+            flexray.read_muscle(name).match(
+                    [&](muscleState_t &state)
+                    {
+                        // keep motors in the current position
+                        flexray.set(name, ControlMode::Position, state.actuatorPos*0.0000579); //TODO: read this magic number from yaml file
+                        ROS_INFO_STREAM("Motor: " << name << " Setting offset to: " << std::to_string(state.actuatorPos*0.0000579));
+                        offset[name] = state.actuatorPos*0.0000579;
+                    },
+                    [](FlexRayHardwareInterface::ReadError) {});
+            initialized = true;
+        }
+    }
+
+    /*
+     * Implements message callback to call force_init()
+     */
+    void initCallback(const std_msgs::String::ConstPtr& msg)
+    {
+       initialize();
     }
 
       FlexRayHardwareInterface flexray;
@@ -82,7 +142,7 @@ class MyoMotor {
       double minForce;
       double maxForce;
       std::map<std::string, int> maxContractileDisplacement;
-      std::map<std::string, double> offset; //offset between position 0 and actuators position when link is perpendicular to the ground
+      std::map<std::string, float> offset; //offset between position 0 and actuators position when link is perpendicular to the ground
       bool initialized;
 
       MyoMotor(FlexRayHardwareInterface &&flexray) : flexray{ std::move(flexray) }
@@ -96,41 +156,11 @@ class MyoMotor {
           maxForce = 70.0;
           maxContractileDisplacement["biceps"] = 12;
           maxContractileDisplacement["triceps"] = 12;
-          maxContractileDisplacement["hand"] = 5;
-          maxContractileDisplacement["forearm"] = 5;
+          maxContractileDisplacement["wrist_flexor"] = 5;
+          maxContractileDisplacement["wrist_extensor"] = 5;
       }
     };
 
-
-/*
-* Implements the service to initialize the motors, so that the arm is perpendicular to the base
-*/
-void initialize(MyoMotor &myo_control)
-  {
-
-      for (auto &name : myo_control.flexray.get_muscle_names())
-      {
-        myo_control.flexray.set(name, ControlMode::Force, 43);
-      }
-
-      ROS_INFO_STREAM("Press ENTER to initialize the current positions as 0");
-      if (std::cin.get() == '\n')
-      {
-          for (auto &name : myo_control.flexray.get_muscle_names()) {
-            myo_control.flexray.read_muscle(name).match(
-            [&](muscleState_t &state)
-            {
-              // keep motors in the current position
-              myo_control.flexray.set(name, ControlMode::Position, state.actuatorPos*0.0000579); //TODO: read this magic number from yaml file
-              ROS_INFO_STREAM("Motor: " << name << " Setting offset to: " << std::to_string(state.actuatorPos*0.0000579));
-              myo_control.offset[name] = state.actuatorPos*0.00005788606746738269;
-            },
-            [](FlexRayHardwareInterface::ReadError) {});
-          myo_control.initialized = true;
-        }
-      }
-    // }
-  }
 
 
 
@@ -188,10 +218,13 @@ void blink(MyoMotor &myo_control)
   * rosservice call /myo_blink/setup /myo_blink/<TAB>- will autocomplete*
   */
   auto moveMotor_service =
-      n.advertiseService("/myo_blink/move", &MyoMotor::moveMotor, &myo_control);
+      n.advertiseService("/myo_blink/move", &MyoMotor::moveMotorService, &myo_control);
 
 
-  ros::Subscriber sub = n.subscribe("/myo_blink/command", 1000, &MyoMotor::moveCallback, &myo_control);
+  ros::Subscriber command_sub = n.subscribe("/myo_blink/command", 1000, &MyoMotor::moveMotorCallback, &myo_control);
+  ros::Subscriber init_sub = n.subscribe("/myo_blink/init", 1000, &MyoMotor::initCallback, &myo_control);
+  ros::Subscriber force_init_sub = n.subscribe("/myo_blink/force_init", 1000, &MyoMotor::forceInitCallback, &myo_control);
+  ros::Subscriber relax_all_sub = n.subscribe("/myo_blink/relax_all", 1000, &MyoMotor::relaxAllCallback, &myo_control);
 
     /*
   * The actual flexrayusbinterface. It resides in the ROS package
@@ -204,7 +237,7 @@ void blink(MyoMotor &myo_control)
   * Defines the update rate of this ROS node
   * It will be used by loop_rate.sleep();
   */
-  ros::Rate loop_rate(100);
+  ros::Rate loop_rate(1000);
 
   /**
      * This is a message object. You stuff it with data, and then publish it.
@@ -245,7 +278,7 @@ void blink(MyoMotor &myo_control)
       myo_control.flexray.read_muscle(name).match(
           [&](muscleState_t &state) {
             msg_state.elasticDisplacement = state.tendonDisplacement; //encoder ticks
-            msg_state.contractileDisplacement = state.actuatorPos*0.00005788606746738269 - myo_control.offset[name]; // deviation from initial upright position
+            msg_state.contractileDisplacement = state.actuatorPos*0.0000579 - myo_control.offset[name]; // deviation from initial upright position
             msg_state.actuatorCurrent = state.actuatorCurrent;
             msg_state.actuatorVel = state.actuatorVel;
             msg_state.actuatorPos = state.actuatorPos;
@@ -264,12 +297,12 @@ void blink(MyoMotor &myo_control)
                 }
             }
             // TODO get rid of this magic!
-            if (name=="forearm")
+            if (name=="wrist_flexor")
             {
               angle.data = state.jointPos;
               joint_pubs["upper"].publish(angle);
             }
-              else if (name=="hand")
+              else if (name=="wrist_extensor")
             {
                 angle.data = state.jointPos;
                 joint_pubs["lower"].publish(angle);
@@ -335,10 +368,16 @@ int main(int argc, char **argv) {
                     motor.minForce = node["_SoftSpring"]["constant"].as<double>();
                     ROS_INFO_STREAM("Minimum force to apply to the motor: " << motor.minForce);
 
-                    ROS_INFO_STREAM("Press ENTER to initialize, S to skip initialization");
-                    if (std::cin.get() == '\n') {
-                        initialize(motor);
-                    }
+//                    ROS_INFO_STREAM("Press ENTER to initialize, S to skip initialization");
+//                    if (std::cin.get() == '\n') {
+//
+//                        motor.force_all(43.0);
+//
+//                        ROS_INFO_STREAM("Press ENTER to initialize here");
+//                        if (std::cin.get() == '\n') {
+//                            motor.initialize();
+//                        }
+//                    }
                     blink(motor);
                     return false;
                    },
