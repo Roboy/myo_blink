@@ -54,6 +54,7 @@ find_package( yaml-cpp REQUIRED )
 add_message_files(
   FILES
   muscleState.msg
+  muscleCommand.msg
 )
 
 ## Generate services in the 'srv' folder
