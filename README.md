@@ -32,7 +32,7 @@ docker run --rm -ti --privileged -v /dev/bus/usb:/dev/bus/usb -v ~/Development/R
 
 ### Install system dependencies
 
-Once you are inside the container or 
+Once you are inside the container or
 
 if you are running 16.04 and kinetic directly run through the following commands
 ```
@@ -77,10 +77,13 @@ source devel/setup.bash
 roslaunch myo_blink myo_blink.launch
 ```
 
-### Read the spring displacement sensor
+### Read the muscle's data
 ```
-rostopic echo /myo_blink/muscles/0/sensors/displacement -c
+rostopic echo -c /myo_blink/muscles/biceps
 ```
+
+**Please note, that nothing will be published on these topics before you have sent any command to the motor!**
+
 
 ### Move the motor
 Control mode (action):
@@ -88,12 +91,11 @@ Control mode (action):
 - 'move with' - VelocityController
 - 'keep' - Effort / ForceController
 ```
-rosservice call /myo_blink/move "ganglion: 0
-muscle: 1
+rosservice call /myo_blink/move "biceps
 action: 'move to'
-setpoint: 10.0" 
+setpoint: 10.0"
 ```
 ### Units
-- Position controller ('move to' command) expects the setpoint in radians 
+- Position controller ('move to' command) expects the setpoint in radians
 - actuatorPosition and tendonDisplacement are displayed in encoder ticks
 - 1 rad ~ 17275 ticks

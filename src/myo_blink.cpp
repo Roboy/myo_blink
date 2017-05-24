@@ -80,7 +80,7 @@ void blink(MyoMotor &myo_control) {
     muscle_pubs.emplace(
         name,
         n.advertise<myo_blink::muscleState>(std::string{"/myo_blink/muscles/"} +
-                                                name + "/sensors",
+                                                name,
                                             1000, true));
   }
 
