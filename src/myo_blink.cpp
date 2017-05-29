@@ -22,6 +22,9 @@
 #include <sstream>
 #include <thread>
 
+#define RAD_PER_COUNT 0.0000579
+
+
 using json = nlohmann::json;
 
 class MyoMotor {
@@ -109,6 +112,15 @@ class MyoMotor {
         force_all(38.0);
     }
 
+    void stopAllCallback(const std_msgs::String::ConstPtr& msg)
+    {
+        ROS_INFO_STREAM("stopping all motors // velocity = 0");
+        for (auto &name : flexray.get_muscle_names())
+        {
+            flexray.set(name, ControlMode::Velocity, 0.0);
+        }
+    }
+
     /*
     *  initializes in the current position
     */
@@ -120,9 +132,10 @@ class MyoMotor {
                     [&](muscleState_t &state)
                     {
                         // keep motors in the current position
-                        flexray.set(name, ControlMode::Position, state.actuatorPos*0.0000579); //TODO: read this magic number from yaml file
-                        ROS_INFO_STREAM("Motor: " << name << " Setting offset to: " << std::to_string(state.actuatorPos*0.0000579));
-                        offset[name] = state.actuatorPos*0.0000579;
+                        flexray.set(name, ControlMode::Velocity, 0);
+//                        flexray.set(name, ControlMode::Position, state.actuatorPos*RAD_PER_COUNT); //TODO: read this magic number from yaml file
+                        ROS_INFO_STREAM("Motor: " << name << " Setting offset to: " << std::to_string(state.actuatorPos));
+                        offset[name] = state.actuatorPos*RAD_PER_COUNT;
                     },
                     [](FlexRayHardwareInterface::ReadError) {});
             initialized = true;
@@ -153,7 +166,7 @@ class MyoMotor {
 
           }
           initialized = false;
-          maxForce = 70.0;
+          maxForce = 100.0;
           maxContractileDisplacement["biceps"] = 12;
           maxContractileDisplacement["triceps"] = 12;
           maxContractileDisplacement["wrist_flexor"] = 5;
@@ -161,7 +174,8 @@ class MyoMotor {
       }
     };
 
-
+// math pi const
+constexpr float pi() { return std::atan(1)*4; }
 
 
 void blink(MyoMotor &myo_control)
@@ -225,7 +239,7 @@ void blink(MyoMotor &myo_control)
   ros::Subscriber init_sub = n.subscribe("/myo_blink/init", 1000, &MyoMotor::initCallback, &myo_control);
   ros::Subscriber force_init_sub = n.subscribe("/myo_blink/force_init", 1000, &MyoMotor::forceInitCallback, &myo_control);
   ros::Subscriber relax_all_sub = n.subscribe("/myo_blink/relax_all", 1000, &MyoMotor::relaxAllCallback, &myo_control);
-
+  ros::Subscriber stop_all_sub = n.subscribe("/myo_blink/stop_all", 1000, &MyoMotor::stopAllCallback, &myo_control);
     /*
   * The actual flexrayusbinterface. It resides in the ROS package
   * flexrayusbinterface. If you look into both the CMakeLists.txt and
@@ -237,7 +251,7 @@ void blink(MyoMotor &myo_control)
   * Defines the update rate of this ROS node
   * It will be used by loop_rate.sleep();
   */
-  ros::Rate loop_rate(1000);
+  ros::Rate loop_rate(200);
 
   /**
      * This is a message object. You stuff it with data, and then publish it.
@@ -262,6 +276,17 @@ void blink(MyoMotor &myo_control)
    * in the constructor above.
    */
   numOGang_pubber.publish(msg);
+  std::map<std::string, float> prevElasticDisplacement;
+    prevElasticDisplacement["biceps"] = 0;
+    prevElasticDisplacement["triceps"] = 0;
+    prevElasticDisplacement["wrist_flexor"] = 0;
+    prevElasticDisplacement["wrist_extensor"] = 0;
+
+    std::map<std::string, float> prevUpdateTime;
+
+    for (auto &name : motorNames) {
+        prevUpdateTime[name] =  ros::Time::now().toSec();
+    }
 
   /*
   * This while loop uses 'ros::ok()' to check if ROS/roscore is still running
@@ -277,25 +302,30 @@ void blink(MyoMotor &myo_control)
     for (auto &name : motorNames) {
       myo_control.flexray.read_muscle(name).match(
           [&](muscleState_t &state) {
-            msg_state.elasticDisplacement = state.tendonDisplacement; //encoder ticks
-            msg_state.contractileDisplacement = state.actuatorPos*0.0000579 - myo_control.offset[name]; // deviation from initial upright position
+            msg_state.elasticDisplacement = state.tendonDisplacement; //ticks -> /66666.666; // meters
+            msg_state.contractileDisplacement = state.actuatorPos * RAD_PER_COUNT - myo_control.offset[name];// ticks -> * 0.006 * pi() / 108544; // meters
             msg_state.actuatorCurrent = state.actuatorCurrent;
-            msg_state.actuatorVel = state.actuatorVel;
-            msg_state.actuatorPos = state.actuatorPos;
-            msg_state.jointPos = state.jointPos;
+            msg_state.actuatorVel =  state.actuatorVel * RAD_PER_COUNT; //rad/s
+            msg_state.actuatorPos = state.actuatorPos * RAD_PER_COUNT; // radians
+            msg_state.elasticVel = (prevElasticDisplacement[name] - state.tendonDisplacement) / ((ros::Time::now().toSec() - prevUpdateTime[name]) * 66666.666); // m/s
+//            ROS_INFO_STREAM(name << " length change: " << prevElasticDisplacement[name] - state.tendonDisplacement << " time change: " << (ros::Time::now().toSec() - prevUpdateTime[name]));
+            prevUpdateTime[name] = ros::Time::now().toSec();
+            prevElasticDisplacement[name] = state.tendonDisplacement;
+
+//            msg_state.jointPos = state.jointPos;
             muscle_pubs.at(name).publish(msg_state);
 
             // if the physical limit of joint angle is reached, fix current position and don't move the motor
             // works only if the motors were initialized
             // values are currently tuned for the straight upright position for all links
-            if (myo_control.initialized)
-            {
-                if (msg_state.contractileDisplacement >= myo_control.maxContractileDisplacement[name])
-                {
-                    ROS_WARN_STREAM("Muscle " << name << " has reached its limit. Setting force to minimum (" << std::to_string(myo_control.minForce) << " N).");
-                    myo_control.flexray.set(name, ControlMode::Force, myo_control.minForce);
-                }
-            }
+//            if (myo_control.initialized)
+//            {
+//                if (msg_state.contractileDisplacement >= myo_control.maxContractileDisplacement[name])
+//                {
+//                    ROS_WARN_STREAM("Muscle " << name << " has reached its limit. Setting force to minimum (" << std::to_string(myo_control.minForce) << " N).");
+//                    myo_control.flexray.set(name, ControlMode::Force, myo_control.minForce);
+//                }
+//            }
             // TODO get rid of this magic!
             if (name=="wrist_flexor")
             {
