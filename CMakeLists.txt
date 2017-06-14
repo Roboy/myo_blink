@@ -138,7 +138,7 @@ add_executable(myo_blink src/myo_blink.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(myo_blink ${catkin_EXPORTED_TARGETS} )
+add_dependencies(myo_blink ${catkin_EXPORTED_TARGETS} ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(myo_blink
