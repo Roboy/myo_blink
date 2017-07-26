@@ -14,6 +14,7 @@
 #include "std_msgs/Float32.h"
 #include "std_msgs/Int32.h"
 #include "std_msgs/String.h"
+#include "std_msgs/Bool.h"
 
 #include <boost/optional.hpp>
 #include <chrono>
@@ -221,10 +222,11 @@ void blink(MyoMotor &myo_control)
         name,
         n.advertise<myo_blink::muscleState>(std::string{"/myo_blink/muscles/"} +
                                                 name + "/sensors",
-                                            1000, true));
+                                            1000, false));
   }
 
-
+   auto startPub = n.advertise<std_msgs::Int32>("/myo_blink/wrestle/start", 1000, false);
+//    n.advertise<std_msgs::Bool>("/myo_blink/joints/upper/hjkjkhjk", 1000);
   /*
   * This advertises the services with the roscore, making them available to call
   * from other ROS nodes or via the command line. For this demo it is likely
@@ -251,7 +253,7 @@ void blink(MyoMotor &myo_control)
   * Defines the update rate of this ROS node
   * It will be used by loop_rate.sleep();
   */
-  ros::Rate loop_rate(200);
+  ros::Rate loop_rate(100);
 
   /**
      * This is a message object. You stuff it with data, and then publish it.
@@ -276,6 +278,11 @@ void blink(MyoMotor &myo_control)
    * in the constructor above.
    */
   numOGang_pubber.publish(msg);
+
+  std_msgs::Int32 start;
+  start.data = 0;
+  startPub.publish(start);
+
   std::map<std::string, float> prevElasticDisplacement;
     prevElasticDisplacement["biceps"] = 0;
     prevElasticDisplacement["triceps"] = 0;
@@ -303,9 +310,9 @@ void blink(MyoMotor &myo_control)
       myo_control.flexray.read_muscle(name).match(
           [&](muscleState_t &state) {
             msg_state.elasticDisplacement = state.tendonDisplacement; //ticks -> /66666.666; // meters
-            msg_state.contractileDisplacement = state.actuatorPos * RAD_PER_COUNT - myo_control.offset[name];// ticks -> * 0.006 * pi() / 108544; // meters
+            msg_state.contractileDisplacement = myo_control.offset[name] - state.actuatorPos * RAD_PER_COUNT;// rad
             msg_state.actuatorCurrent = state.actuatorCurrent;
-            msg_state.actuatorVel =  state.actuatorVel * RAD_PER_COUNT; //rad/s
+            msg_state.actuatorVel =  - state.actuatorVel * RAD_PER_COUNT; //rad/s
             msg_state.actuatorPos = state.actuatorPos * RAD_PER_COUNT; // radians
             msg_state.elasticVel = (prevElasticDisplacement[name] - state.tendonDisplacement) / ((ros::Time::now().toSec() - prevUpdateTime[name]) * 66666.666); // m/s
 //            ROS_INFO_STREAM(name << " length change: " << prevElasticDisplacement[name] - state.tendonDisplacement << " time change: " << (ros::Time::now().toSec() - prevUpdateTime[name]));
