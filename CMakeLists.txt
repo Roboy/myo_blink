@@ -55,6 +55,7 @@ add_message_files(
   FILES
   muscleState.msg
   muscleCommand.msg
+  afferents.msg
 )
 
 ## Generate services in the 'srv' folder
