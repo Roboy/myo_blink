@@ -77,8 +77,8 @@ source devel/setup.bash
 roslaunch myo_blink myo_blink.launch
 ```
 
-### Use GUI to control 
-Follow instructions on [node-red-myorobotics-dashboard](https://github.com/Roboy/node-red-myorobotics-dashboard)
+### Use GUI to control and monitor the system
+Follow instructions described in [node-red-myorobotics-dashboard](https://github.com/Roboy/node-red-myorobotics-dashboard)
 
 ### Read the spring displacement sensor
 ```
